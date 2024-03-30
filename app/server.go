@@ -44,16 +44,18 @@ func handleClient(conn net.Conn) {
 
 	// Read data
 	buf := make([]byte, 1024)
-	n, err := conn.Read(buf)
-	if err != nil {
-		return
+	for {
+		n, err := conn.Read(buf)
+		if err != nil {
+			return
+		}
+
+		request := strings.ToLower(strings.TrimSpace(string(buf[:n])))
+		fmt.Println("Request is: ", request)
+
+		str := "+PONG\r\n"
+		response := []byte(str)
+
+		conn.Write(response)
 	}
-
-	request := strings.ToLower(strings.TrimSpace(string(buf[:n])))
-	fmt.Println("Request is: ", request)
-
-	str := "+PONG\r\n"
-	response := []byte(str)
-
-	conn.Write(response)
 }
