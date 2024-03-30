@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
@@ -9,9 +11,10 @@ import (
 	"net"
 )
 
+type Command string
+
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
-	fmt.Println("Logs from your program will appear here!")
 	port := 6379
 	address := "0.0.0.0"
 
@@ -46,7 +49,7 @@ func handleClient(conn net.Conn) {
 	buf := make([]byte, 1024)
 	for {
 		n, err := conn.Read(buf)
-		if err != nil {
+		if err != nil && !errors.Is(err, io.EOF) {
 			return
 		}
 
