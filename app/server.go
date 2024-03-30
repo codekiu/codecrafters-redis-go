@@ -49,10 +49,10 @@ func handleClient(conn net.Conn) {
 		return
 	}
 
-	request := strings.TrimSpace(string(buf[:n]))
+	request := strings.ToLower(strings.TrimSpace(string(buf[:n])))
 	fmt.Println("Request is: ", request)
 
-	if request == "PING" {
+	if request == "ping" {
 		str := "+PONG\r\n"
 		response := []byte(str)
 
