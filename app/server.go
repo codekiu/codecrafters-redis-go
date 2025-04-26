@@ -11,7 +11,23 @@ import (
 	"net"
 )
 
-type Command string
+type Command interface {
+	Handle(conn net.Conn)
+}
+
+type pingCommand struct{}
+
+func (c *pingCommand) Handle(conn net.Conn) {
+	conn.Write([]byte("+PONG\r\n"))
+}
+
+type echoCommand struct {
+	Content string
+}
+
+func (c *echoCommand) Handle(conn net.Conn) {
+	conn.Write([]byte("+" + c.Content + "\r\n"))
+}
 
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -49,16 +65,49 @@ func handleClient(conn net.Conn) {
 	buf := make([]byte, 1024)
 	for {
 		n, err := conn.Read(buf)
-		if err != nil && !errors.Is(err, io.EOF) {
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return // Client closed the connection normally
+			}
+			fmt.Println("Error reading from connection: ", err.Error())
 			return
 		}
 
-		request := strings.ToLower(strings.TrimSpace(string(buf[:n])))
-		fmt.Println("Request is: ", request)
+		cmd, innerErr := parseCommand(string(buf[:n]))
+		if innerErr != nil {
+			fmt.Println("Error parsing command: ", innerErr.Error())
+			return
+		}
 
-		str := "+PONG\r\n"
-		response := []byte(str)
-
-		conn.Write(response)
+		cmd.Handle(conn)
 	}
 }
+
+func parseCommand(request string) (Command, error) {
+	messages := strings.Split(request, CRLF)
+	fmt.Println("Messages: ", messages)
+	cmd := strings.ToLower(messages[2])
+
+	fmt.Println("CMD: ", cmd)
+	switch cmd {
+	case "echo":
+		return &echoCommand{Content: messages[4]}, nil
+	case "ping":
+		return &pingCommand{}, nil
+	}
+
+	return nil, errors.New("no command to parse")
+}
+
+const (
+	T_SIMPLE_STRING = "+"
+	T_SIMPLE_ERROR  = "-"
+	T_INTEGER       = ":"
+	T_BULK_STRING   = "$"
+	T_ARRAY         = "*"
+	T_NULL          = "_"
+	T_BOOLEAN       = "#"
+	T_MAP           = "%"
+)
+
+const CRLF = "\r\n"
