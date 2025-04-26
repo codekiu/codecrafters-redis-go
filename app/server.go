@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"strconv"
@@ -65,10 +66,10 @@ func (c *getCommand) Handle(conn net.Conn) {
 
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
-	port := 6379
+	port := flag.Int("port", 6379, "Port for TCP server; 6379 as default")
 	address := "0.0.0.0"
 
-	fullAddress := address + ":" + strconv.Itoa(port)
+	fullAddress := address + ":" + strconv.Itoa(*port)
 
 	listener, err := net.Listen("tcp", fullAddress)
 	if err != nil {
