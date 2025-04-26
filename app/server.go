@@ -68,18 +68,19 @@ func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	port := flag.Int("port", 6379, "Port for TCP server; 6379 as default")
 	address := "0.0.0.0"
+	flag.Parse()
 
-	fullAddress := address + ":" + strconv.Itoa(*port)
+	fullAddress := fmt.Sprintf("%s:%d", address, *port)
 
 	listener, err := net.Listen("tcp", fullAddress)
 	if err != nil {
-		fmt.Println("Failed to bind to port 6379")
+		fmt.Println("Failed to bind to port ", port)
 		return
 	}
 
 	defer listener.Close()
 
-	fmt.Printf("Server is listening in port: %d\n", port)
+	fmt.Printf("Server is listening in port: %d\n", *port)
 
 	for {
 		conn, err := listener.Accept()
