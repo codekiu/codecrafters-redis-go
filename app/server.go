@@ -6,6 +6,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"time"
 
 	// Uncomment this block to pass the first stage
 	"net"
@@ -32,12 +33,21 @@ func (c *echoCommand) Handle(conn net.Conn) {
 }
 
 type setCommand struct {
-	Key   string
-	Value string
+	Content []string
 }
 
 func (c *setCommand) Handle(conn net.Conn) {
-	dict[c.Key] = c.Value
+	key := c.Content[4]
+	value := c.Content[6]
+	dict[key] = value
+	if len(c.Content) > 8 && c.Content[8] == "px" {
+		timeInInt, err := strconv.Atoi(c.Content[10])
+		if err != nil {
+			conn.Write([]byte(T_SIMPLE_STRING + "introduce a number to expire" + CRLF))
+			return
+		}
+		go removeFromDict(key, time.Duration(timeInInt*int(time.Millisecond)))
+	}
 	conn.Write([]byte(T_SIMPLE_STRING + "OK" + CRLF))
 }
 
@@ -46,6 +56,10 @@ type getCommand struct {
 }
 
 func (c *getCommand) Handle(conn net.Conn) {
+	if _, prs := dict[c.Key]; !prs {
+		conn.Write([]byte(T_BULK_STRING + "-1" + CRLF))
+		return
+	}
 	conn.Write([]byte(T_SIMPLE_STRING + dict[c.Key] + CRLF))
 }
 
@@ -118,7 +132,7 @@ func parseCommand(request string) (Command, error) {
 		if numElements < 3 {
 			return nil, errors.New("not enough parameters")
 		}
-		return &setCommand{Key: messages[4], Value: messages[6]}, nil
+		return &setCommand{Content: messages}, nil
 	case "get":
 		if numElements < 2 {
 			return nil, errors.New("not enough parameters")
@@ -145,3 +159,8 @@ const (
 )
 
 const CRLF = "\r\n"
+
+func removeFromDict(key string, after time.Duration) {
+	time.Sleep(after)
+	delete(dict, key)
+}
