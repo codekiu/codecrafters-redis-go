@@ -40,7 +40,7 @@ func (c *setCommand) Handle(conn net.Conn) {
 	key := c.Content[4]
 	value := c.Content[6]
 	dict[key] = value
-	if len(c.Content) > 8 && c.Content[8] == "px" {
+	if len(c.Content) > 10 && c.Content[8] == "px" {
 		timeInInt, err := strconv.Atoi(c.Content[10])
 		if err != nil {
 			conn.Write([]byte(T_SIMPLE_STRING + "introduce a number to expire" + CRLF))
@@ -100,8 +100,9 @@ func handleClient(conn net.Conn) {
 	for {
 		n, err := conn.Read(buf)
 		if err != nil {
-			if errors.Is(err, io.EOF) {
-				return // Client closed the connection normally
+			if errors.Is(err, io.EOF) || strings.Contains(err.Error(), "closed pipe") {
+				// Client closed connection normally or pipe was closed - this is expected in tests
+				return
 			}
 			fmt.Println("Error reading from connection: ", err.Error())
 			return
@@ -156,9 +157,8 @@ const (
 	T_NULL          = "_"
 	T_BOOLEAN       = "#"
 	T_MAP           = "%"
+	CRLF            = "\r\n"
 )
-
-const CRLF = "\r\n"
 
 func removeFromDict(key string, after time.Duration) {
 	time.Sleep(after)
