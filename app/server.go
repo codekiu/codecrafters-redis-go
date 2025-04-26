@@ -11,6 +11,8 @@ import (
 	"net"
 )
 
+var dict = make(map[string]string)
+
 type Command interface {
 	Handle(conn net.Conn)
 }
@@ -18,7 +20,7 @@ type Command interface {
 type pingCommand struct{}
 
 func (c *pingCommand) Handle(conn net.Conn) {
-	conn.Write([]byte("+PONG\r\n"))
+	conn.Write([]byte(T_SIMPLE_STRING + "PONG" + CRLF))
 }
 
 type echoCommand struct {
@@ -26,7 +28,25 @@ type echoCommand struct {
 }
 
 func (c *echoCommand) Handle(conn net.Conn) {
-	conn.Write([]byte("+" + c.Content + "\r\n"))
+	conn.Write([]byte(T_SIMPLE_STRING + c.Content + CRLF))
+}
+
+type setCommand struct {
+	Key   string
+	Value string
+}
+
+func (c *setCommand) Handle(conn net.Conn) {
+	dict[c.Key] = c.Value
+	conn.Write([]byte(T_SIMPLE_STRING + "OK" + CRLF))
+}
+
+type getCommand struct {
+	Key string
+}
+
+func (c *getCommand) Handle(conn net.Conn) {
+	conn.Write([]byte(T_SIMPLE_STRING + dict[c.Key] + CRLF))
 }
 
 func main() {
@@ -75,8 +95,8 @@ func handleClient(conn net.Conn) {
 
 		cmd, innerErr := parseCommand(string(buf[:n]))
 		if innerErr != nil {
-			fmt.Println("Error parsing command: ", innerErr.Error())
-			return
+			conn.Write([]byte(T_SIMPLE_STRING + innerErr.Error() + CRLF))
+			continue
 		}
 
 		cmd.Handle(conn)
@@ -85,18 +105,32 @@ func handleClient(conn net.Conn) {
 
 func parseCommand(request string) (Command, error) {
 	messages := strings.Split(request, CRLF)
-	fmt.Println("Messages: ", messages)
+	arrayLength := messages[0]
+	numElements, err := strconv.Atoi(arrayLength[1:])
+	if err != nil {
+		return nil, fmt.Errorf("wrong number of parameters'%v'", err)
+	}
+
 	cmd := strings.ToLower(messages[2])
 
-	fmt.Println("CMD: ", cmd)
 	switch cmd {
+	case "set":
+		if numElements < 3 {
+			return nil, errors.New("not enough parameters")
+		}
+		return &setCommand{Key: messages[4], Value: messages[6]}, nil
+	case "get":
+		if numElements < 2 {
+			return nil, errors.New("not enough parameters")
+		}
+		return &getCommand{Key: messages[4]}, nil
 	case "echo":
 		return &echoCommand{Content: messages[4]}, nil
 	case "ping":
 		return &pingCommand{}, nil
 	}
 
-	return nil, errors.New("no command to parse")
+	return nil, fmt.Errorf("unknown command '%s'", cmd)
 }
 
 const (
