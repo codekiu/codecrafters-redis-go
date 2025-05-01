@@ -16,40 +16,6 @@ func readResponse(conn net.Conn) string {
 	return string(buf[:n])
 }
 
-func TestPingCommand(t *testing.T) {
-	server, client := newMockConn()
-	defer server.Close()
-	defer client.Close()
-
-	cmd := &pingCommand{}
-	go cmd.Handle(server)
-
-	response := readResponse(client)
-	expected := T_SIMPLE_STRING + "PONG" + CRLF
-
-	if response != expected {
-		t.Errorf("expected %q but got %q", expected, response)
-	}
-}
-
-func TestEchoCommand(t *testing.T) {
-	server, client := newMockConn()
-	defer server.Close()
-	defer client.Close()
-
-	stringToSend := "Hello!"
-
-	cmd := &echoCommand{Content: stringToSend}
-	go cmd.Handle(server)
-
-	response := readResponse(client)
-	expected := T_SIMPLE_STRING + stringToSend + CRLF
-
-	if response != expected {
-		t.Errorf("expected %q but got %q", expected, response)
-	}
-}
-
 func TestHandleClientEcho(t *testing.T) {
 	server, client := newMockConn()
 	defer server.Close()
@@ -170,7 +136,7 @@ func TestHandleClientGet(t *testing.T) {
 	key := "hello"
 	value := "hola"
 
-	dict[key] = value
+	memoryStorage.Set(key, value)
 
 	server, client := newMockConn()
 	defer server.Close()
@@ -205,7 +171,5 @@ func TestHandleClientGet(t *testing.T) {
 }
 
 func resetDict() {
-	for k := range dict {
-		delete(dict, k)
-	}
+	memoryStorage.FlushAll()
 }
