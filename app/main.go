@@ -22,7 +22,6 @@ var (
 func getMasterAddress(replicaof string) (string, string, bool, error) {
 	fmt.Println(strings.TrimSpace(replicaof))
 	address := strings.Split(replicaof, " ")
-	fmt.Println(len(address[0]))
 	if len(address[0]) == 0 {
 		return "", "", false, nil
 	}
@@ -31,6 +30,23 @@ func getMasterAddress(replicaof string) (string, string, bool, error) {
 	}
 
 	return address[0], address[1], true, nil
+}
+
+func startReplicationHandshake(conn net.Conn) error {
+	_, err := conn.Write([]byte("*1\r\n$4\r\nPING\r\n"))
+	if err != nil {
+		fmt.Println("Error writing:", err)
+		return err
+	}
+	buf := make([]byte, 1024)
+	n, err := conn.Read(buf)
+	if err != nil {
+		fmt.Println("Error reading:", err)
+		return err
+	}
+	response := string(buf[:n])
+	fmt.Println("replication ping response:", response)
+	return nil
 }
 
 func main() {
@@ -45,14 +61,22 @@ func main() {
 		return
 	}
 
+	var connectionWithMaster string
+	connection := "0.0.0.0:" + strconv.Itoa(*port)
 	if isSlave {
-		serverInfo = storage.NewInformation("slave", "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb", "0")
-		_, _ = masterAddress, masterPort
+		serverInfo = storage.NewInformation("slave", "9991b4fb1155b71f4a04d3e1bc3e18c4a990aeeb", "0")
+		connectionWithMaster = masterAddress + ":" + masterPort
+		fmt.Println("Sending ping to master", connectionWithMaster)
+
+		master, _ := net.Dial("tcp", connectionWithMaster)
+		defer master.Close()
+
+		startReplicationHandshake(master)
 	} else {
 		serverInfo = storage.NewInformation("master", "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb", "0")
 	}
 
-	listener, err := net.Listen("tcp", "0.0.0.0:"+strconv.Itoa(*port))
+	listener, err := net.Listen("tcp", connection)
 	if err != nil {
 		fmt.Println("Failed to bind to port ", port)
 		return
