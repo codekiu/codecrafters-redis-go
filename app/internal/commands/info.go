@@ -38,7 +38,8 @@ func (c *InfoCommand) Name() string {
 }
 
 func (c *InfoCommand) ParseArguments(args []string) error {
-	if len(args) < 4 {
+	fmt.Println(args)
+	if len(args) < 5 {
 		return fmt.Errorf("not enough args")
 	}
 	c.Content = args[4]

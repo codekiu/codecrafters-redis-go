@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strconv"
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/app/internal/commands"
@@ -15,18 +16,43 @@ import (
 var (
 	memoryStorage = storage.NewMemoryStorage()
 	registry      = commands.NewRegistry()
-	serverInfo    = storage.NewInformation()
+	serverInfo    *storage.Information
 )
+
+func getMasterAddress(replicaof string) (string, string, bool, error) {
+	fmt.Println(strings.TrimSpace(replicaof))
+	address := strings.Split(replicaof, " ")
+	fmt.Println(len(address[0]))
+	if len(address[0]) == 0 {
+		return "", "", false, nil
+	}
+	if len(address) != 2 {
+		return "", "", false, fmt.Errorf("replicaof must follow this  pattern localhost:12345")
+	}
+
+	return address[0], address[1], true, nil
+}
 
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	port := flag.Int("port", 6379, "Port for TCP server; 6379 as default")
-	address := "0.0.0.0"
+	masterInfo := flag.String("replicaof", "", "Port for Redis Master")
 	flag.Parse()
 
-	fullAddress := fmt.Sprintf("%s:%d", address, *port)
+	masterAddress, masterPort, isSlave, err := getMasterAddress(*masterInfo)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	listener, err := net.Listen("tcp", fullAddress)
+	if isSlave {
+		serverInfo = storage.NewInformation("slave")
+		_, _ = masterAddress, masterPort
+	} else {
+		serverInfo = storage.NewInformation("master")
+	}
+
+	listener, err := net.Listen("tcp", "0.0.0.0:"+strconv.Itoa(*port))
 	if err != nil {
 		fmt.Println("Failed to bind to port ", port)
 		return

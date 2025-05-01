@@ -4,8 +4,8 @@ type Information struct {
 	Role string
 }
 
-func NewInformation() *Information {
+func NewInformation(role string) *Information {
 	return &Information{
-		Role: "master",
+		Role: role,
 	}
 }
