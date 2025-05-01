@@ -46,10 +46,10 @@ func main() {
 	}
 
 	if isSlave {
-		serverInfo = storage.NewInformation("slave")
+		serverInfo = storage.NewInformation("slave", "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb", "0")
 		_, _ = masterAddress, masterPort
 	} else {
-		serverInfo = storage.NewInformation("master")
+		serverInfo = storage.NewInformation("master", "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb", "0")
 	}
 
 	listener, err := net.Listen("tcp", "0.0.0.0:"+strconv.Itoa(*port))
