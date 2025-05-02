@@ -1,4 +1,4 @@
-package commands
+package command
 
 import (
 	"fmt"
@@ -9,6 +9,10 @@ import (
 
 type EchoCommand struct {
 	Content string
+}
+
+func NewEchoCommand() *EchoCommand {
+	return &EchoCommand{}
 }
 
 func (c *EchoCommand) Execute(conn net.Conn) error {

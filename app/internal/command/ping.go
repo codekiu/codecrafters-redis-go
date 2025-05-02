@@ -1,4 +1,4 @@
-package commands
+package command
 
 import (
 	"net"
@@ -7,6 +7,10 @@ import (
 )
 
 type PingCommand struct{}
+
+func NewPingCommand() *PingCommand {
+	return &PingCommand{}
+}
 
 func (c *PingCommand) Execute(conn net.Conn) error {
 	_, err := conn.Write([]byte(protocol.T_SIMPLE_STRING + "PONG" + protocol.CRLF))

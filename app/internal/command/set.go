@@ -1,4 +1,4 @@
-package commands
+package command
 
 import (
 	"fmt"
@@ -11,10 +11,16 @@ import (
 )
 
 type SetCommand struct {
-	Storage *storage.MemoryStorage
+	storage *storage.MemoryStorage
 	key     string
 	value   string
 	args    []string
+}
+
+func NewSetCommand(storage *storage.MemoryStorage) *SetCommand {
+	return &SetCommand{
+		storage: storage,
+	}
 }
 
 func (c *SetCommand) Execute(conn net.Conn) error {
@@ -24,9 +30,9 @@ func (c *SetCommand) Execute(conn net.Conn) error {
 			return err
 		}
 
-		c.Storage.SetWithExpiry(c.key, c.value, time.Millisecond*time.Duration(timeInInt))
+		c.storage.SetWithExpiry(c.key, c.value, time.Millisecond*time.Duration(timeInInt))
 	}
-	c.Storage.Set(c.key, c.value)
+	c.storage.Set(c.key, c.value)
 
 	conn.Write([]byte(protocol.T_SIMPLE_STRING + "OK" + protocol.CRLF))
 	return nil

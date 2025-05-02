@@ -1,9 +1,20 @@
-package commands
+package command
 
 import (
 	"fmt"
+	"net"
 	"sync"
+
+	"github.com/codecrafters-io/redis-starter-go/app/internal/storage"
 )
+
+type Command interface {
+	Execute(conn net.Conn) error
+
+	Name() string
+
+	ParseArguments(args []string) error
+}
 
 type Registry struct {
 	commands map[string]Command
@@ -15,6 +26,15 @@ func NewRegistry() *Registry {
 		commands: make(map[string]Command),
 		mx:       sync.RWMutex{},
 	}
+}
+
+func (r *Registry) RegisterCommands(storage *storage.MemoryStorage, info *storage.Information) {
+	r.Register(NewPingCommand())
+	r.Register(NewEchoCommand())
+	r.Register(NewReplconfCommand())
+	r.Register(NewInfoCommand(info))
+	r.Register(NewSetCommand(storage))
+	r.Register(NewGetCommand(storage))
 }
 
 func (r *Registry) Register(command Command) error {

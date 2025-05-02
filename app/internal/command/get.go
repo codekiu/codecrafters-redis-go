@@ -1,4 +1,4 @@
-package commands
+package command
 
 import (
 	"fmt"
@@ -10,12 +10,18 @@ import (
 )
 
 type GetCommand struct {
-	Storage *storage.MemoryStorage
+	storage *storage.MemoryStorage
 	key     string
 }
 
+func NewGetCommand(storage *storage.MemoryStorage) *GetCommand {
+	return &GetCommand{
+		storage: storage,
+	}
+}
+
 func (c *GetCommand) Execute(conn net.Conn) error {
-	content, exists := c.Storage.Get(c.key)
+	content, exists := c.storage.Get(c.key)
 	if !exists {
 		conn.Write([]byte(protocol.T_BULK_STRING + "-1" + protocol.CRLF))
 		return nil

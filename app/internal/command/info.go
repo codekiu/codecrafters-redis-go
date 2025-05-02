@@ -1,4 +1,4 @@
-package commands
+package command
 
 import (
 	"fmt"
@@ -12,16 +12,22 @@ import (
 )
 
 type InfoCommand struct {
-	Info    *storage.Information
+	info    *storage.Information
 	Content string
+}
+
+func NewInfoCommand(storage *storage.Information) *InfoCommand {
+	return &InfoCommand{
+		info: storage,
+	}
 }
 
 func (c *InfoCommand) Execute(conn net.Conn) error {
 	returnString := protocol.T_BULK_STRING
 	var content string
 
-	reflected := reflect.ValueOf(*c.Info)
-	typ := reflect.TypeOf(*c.Info)
+	reflected := reflect.ValueOf(*c.info)
+	typ := reflect.TypeOf(*c.info)
 
 	for i := 0; i < reflected.NumField(); i++ {
 		content += strings.ToLower(typ.Field(i).Name) + ":" + reflected.Field(i).String() + protocol.CRLF
