@@ -32,6 +32,7 @@ func (r *Registry) RegisterCommands(storage *storage.MemoryStorage, info *storag
 	r.Register(NewPingCommand())
 	r.Register(NewEchoCommand())
 	r.Register(NewReplconfCommand())
+	r.Register(NewPsyncCommand())
 	r.Register(NewInfoCommand(info))
 	r.Register(NewSetCommand(storage))
 	r.Register(NewGetCommand(storage))
