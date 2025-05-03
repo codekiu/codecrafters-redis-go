@@ -53,9 +53,9 @@ func (s *Server) Start() {
 }
 
 func (s *Server) GetPort() string {
+	fmt.Println("ADDR", s.listener.Addr().String())
 	addr := strings.Split(s.listener.Addr().String(), ":")
-	print(addr)
-	return addr[1]
+	return addr[len(addr)-1]
 }
 
 func (s *Server) handleConnection(conn net.Conn) {
