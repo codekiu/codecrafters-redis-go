@@ -70,9 +70,9 @@ func (r *ReplicationManager) StartReplication() {
 		subCommand +
 		protocol.CRLF +
 		protocol.T_BULK_STRING +
-		strconv.Itoa(len(r.port)) +
+		strconv.Itoa(len(r.server.GetPort())) +
 		protocol.CRLF +
-		r.port +
+		r.server.GetPort() +
 		protocol.CRLF
 
 	_, err = conn.Write([]byte(respArray))
