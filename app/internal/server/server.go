@@ -53,7 +53,6 @@ func (s *Server) Start() {
 }
 
 func (s *Server) GetPort() string {
-	fmt.Println("ADDR", s.listener.Addr().String())
 	addr := strings.Split(s.listener.Addr().String(), ":")
 	return addr[len(addr)-1]
 }
